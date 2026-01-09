@@ -179,6 +179,10 @@ useEffect(() => {
     document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const scrollToContact = () => {
+    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   // Function to download CV
   const handleDownloadCV = () => {
     // Create a temporary anchor element
@@ -301,7 +305,7 @@ useEffect(() => {
           <p className="subtitle">
             Aspiring <span className="job-title">{currentJobText}</span>
           </p>
-          <button className="download-btn">
+          <button className="download-btn" onClick={scrollToContact}>
             Get in Touch
             <ArrowRight size={20} />
           </button>

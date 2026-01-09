@@ -1,5 +1,8 @@
 /* portfolio.css */
-
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 100px; /* Offset for fixed navbar */
+}
 * {
   margin: 0;
   padding: 0;
