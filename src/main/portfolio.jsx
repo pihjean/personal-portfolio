@@ -6,6 +6,7 @@ import './portfolio.css';
 import profilePhoto from '../assets/profile-photo.jpg';
 import shsProject from '../assets/shs-project.png';
 import shsProject2 from '../assets/shs-project2.png';
+import cvFile from '../assets/Princess_Jean_Potes_Resume.pdf'; // Add this import
 // import parishProject from './assets/parish-project.jpg';
 // import parishProject2 from './assets/parish-project-2.jpg';
 // import iotProject from './assets/iot-project.jpg';
@@ -178,6 +179,17 @@ useEffect(() => {
     document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Function to download CV
+  const handleDownloadCV = () => {
+    // Create a temporary anchor element
+    const link = document.createElement('a');
+    link.href = cvFile;
+    link.download = 'Princess_Jean_Potes_Resume.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleImageNav = (projectId, direction, e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -293,7 +305,7 @@ useEffect(() => {
             Get in Touch
             <ArrowRight size={20} />
           </button>
-          <button className="view-my-work-btn">
+          <button className="view-my-work-btn" onClick={handleDownloadCV}>
             Download CV
             <Download size={20} />
           </button>
