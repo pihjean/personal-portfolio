@@ -1,15 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ArrowRight, Download } from 'lucide-react';
+import emailjs from '@emailjs/browser';
 import './portfolio.css';
 
-// Import your images here - replace with your actual image files
-// import profilePhoto from './assets/profile.jpg';
+// Import your images here
 import shsProject from '../assets/shs-project.png';
-// import shsProject2 from './assets/shs-project-2.jpg';
-// import parishProject from './assets/parish-project.jpg';
-// import parishProject2 from './assets/parish-project-2.jpg';
-// import iotProject from './assets/iot-project.jpg';
-// import iotProject2 from './assets/iot-project-2.jpg';
+import shsProject2 from '../assets/shs-project2.png';
 
 export default function Portfolio() {
   const [headingText, setHeadingText] = useState('');
@@ -17,6 +13,8 @@ export default function Portfolio() {
   const [currentJobText, setCurrentJobText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAboutSection, setIsAboutSection] = useState(false);
+  const [isProjectsSection, setIsProjectsSection] = useState(false);
+  const [isContactSection, setIsContactSection] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [aboutText1, setAboutText1] = useState('');
   const [aboutText2, setAboutText2] = useState('');
@@ -26,11 +24,31 @@ export default function Portfolio() {
     parish: 0,
     iot: 0
   });
+  const [flippedCards, setFlippedCards] = useState({
+    frontend: false,
+    backend: false,
+    mobile: false,
+    tools: false
+  });
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState('');
+  
+  const formRef = useRef();
   
   const fullHeading = "Hi, I am Princess Jean Potes";
   const jobs = ["Web Developer", "Game Developer", "UI/UX Designer"];
   const aboutParagraph1 = "A Bachelor of Science in Information Technology student at Camarines Norte State College. Since 2024, I have been working as a freelance developer and have completed projects that show my skills in both backend and frontend development.";
   const aboutParagraph2 = "I enjoy building systems that are efficient and can grow easily. I am also interested in combining hardware and software for robotics projects. I know how to use technologies like React.js, Node.js, Flutter, and Arduino programming.";
+  
+  // Initialize EmailJS
+  useEffect(() => {
+    emailjs.init("RGqSAb_M0itJH2VJv");
+  }, []);
   
   // Loading screen
   useEffect(() => {
@@ -80,31 +98,58 @@ export default function Portfolio() {
     }
   }, [currentJobText, isDeleting, currentJobIndex, headingText]);
 
-  // About section scroll detection and typewriter
+  // About and Projects section scroll detection
   useEffect(() => {
     const handleScroll = () => {
+      const homeSection = document.getElementById('home');
       const aboutSection = document.getElementById('about');
+      const projectsSection = document.getElementById('projects');
       const skillsSection = document.getElementById('skills');
+      const contactSection = document.getElementById('contact');
       
-      if (aboutSection && skillsSection) {
+      if (homeSection && aboutSection && projectsSection && skillsSection && contactSection) {
+        const homeTop = homeSection.offsetTop;
         const aboutTop = aboutSection.offsetTop;
+        const projectsTop = projectsSection.offsetTop;
         const skillsTop = skillsSection.offsetTop;
-        const skillsBottom = skillsTop + skillsSection.offsetHeight;
-        const scrollPosition = window.scrollY + window.innerHeight / 2;
+        const contactTop = contactSection.offsetTop;
+        const scrollPosition = window.scrollY + 100;
         
-        // Check if we're in the about section or skills section
-        if ((scrollPosition >= aboutTop && scrollPosition < skillsTop) || 
-            (scrollPosition >= skillsTop && scrollPosition < skillsBottom)) {
+        if (scrollPosition >= contactTop) {
+          setIsAboutSection(false);
+          setIsProjectsSection(false);
+          setIsContactSection(true);
+        }
+        else if (scrollPosition >= skillsTop) {
           setIsAboutSection(true);
+          setIsProjectsSection(false);
+          setIsContactSection(false);
           if (!hasTypedAbout) {
             setHasTypedAbout(true);
           }
-        } else {
+        } 
+        else if (scrollPosition >= projectsTop) {
           setIsAboutSection(false);
+          setIsProjectsSection(true);
+          setIsContactSection(false);
+        }
+        else if (scrollPosition >= aboutTop) {
+          setIsAboutSection(true);
+          setIsProjectsSection(false);
+          setIsContactSection(false);
+          if (!hasTypedAbout) {
+            setHasTypedAbout(true);
+          }
+        }
+        else {
+          setIsAboutSection(false);
+          setIsProjectsSection(false);
+          setIsContactSection(false);
         }
       }
     };
 
+    handleScroll();
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [hasTypedAbout]);
@@ -138,7 +183,6 @@ export default function Portfolio() {
       let newIndex;
       
       if (direction === 'next') {
-        // 0 = title card, 1 = first image, 2 = second image
         newIndex = currentIndex >= 2 ? 2 : currentIndex + 1;
       } else {
         newIndex = currentIndex <= 0 ? 0 : currentIndex - 1;
@@ -149,6 +193,59 @@ export default function Portfolio() {
         [projectId]: newIndex
       };
     });
+  };
+
+  const handleCardFlip = (cardName) => {
+    setFlippedCards(prev => ({
+      ...prev,
+      [cardName]: !prev[cardName]
+    }));
+  };
+
+  const handleContactChange = (e) => {
+    const { name, value } = e.target;
+    const fieldMap = {
+      'from_name': 'name',
+      'from_email': 'email',
+      'message': 'message'
+    };
+    const stateField = fieldMap[name] || name;
+    
+    setContactForm(prev => ({
+      ...prev,
+      [stateField]: value
+    }));
+  };
+
+ const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus('');
+
+    try {
+      const result = await emailjs.sendForm(
+        'service_muf1ijg', // Your Service ID - UPDATE THIS with your actual Service ID
+        'template_yo6mcig', // Your Template ID
+        formRef.current,
+        'RGqSAb_M0itJH2VJv' // Your Public Key
+      );
+
+      if (result.text === 'OK') {
+        setSubmitStatus('success');
+        setContactForm({ name: '', email: '', message: '' });
+        if (formRef.current) {
+          formRef.current.reset();
+        }
+      } else {
+        setSubmitStatus('error');
+      }
+    } catch (error) {
+      console.error('EmailJS Error:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+      setTimeout(() => setSubmitStatus(''), 5000);
+    }
   };
 
   if (isLoading) {
@@ -174,7 +271,7 @@ export default function Portfolio() {
   }
 
   return (
-    <div className={`portfolio-container ${isAboutSection ? 'in-about-section' : ''}`}>
+    <div className={`portfolio-container ${isAboutSection ? 'in-about-section' : ''} ${isProjectsSection ? 'in-projects-section' : ''} ${isContactSection ? 'in-contact-section' : ''}`}>
       <nav className="nav">
         <a href="#home">Home</a>
         <a href="#about">About Me</a>
@@ -208,7 +305,6 @@ export default function Portfolio() {
           <div className="photo-frame-outer"></div>
           <div className="photo-frame-inner">
             <div className="photo-placeholder">
-              {/* Uncomment and use your actual image */}
               {/* <img src={profilePhoto} alt="Princess Jean Potes" /> */}
             </div>
           </div>
@@ -275,8 +371,7 @@ export default function Portfolio() {
                   ) : (
                     <div className="project-preview-image">
                       <div className="image-placeholder">
-                        {/* <img src={shsProject2} alt="SHS Management System Screenshot 2" /> */}
-                        Second Screenshot
+                        <img src={shsProject2} alt="SHS Management System" />
                       </div>
                     </div>
                   )}
@@ -312,14 +407,12 @@ export default function Portfolio() {
                   ) : projectImages.parish === 1 ? (
                     <div className="project-preview-image">
                       <div className="image-placeholder">
-                        {/* <img src={parishProject} alt="Parish Appointment System" /> */}
                         First Screenshot
                       </div>
                     </div>
                   ) : (
                     <div className="project-preview-image">
                       <div className="image-placeholder">
-                        {/* <img src={parishProject2} alt="Parish Appointment System Screenshot 2" /> */}
                         Second Screenshot
                       </div>
                     </div>
@@ -364,14 +457,12 @@ export default function Portfolio() {
                   ) : projectImages.iot === 1 ? (
                     <div className="project-preview-image">
                       <div className="image-placeholder">
-                        {/* <img src={iotProject} alt="IoT Learning Tool" /> */}
                         First Screenshot
                       </div>
                     </div>
                   ) : (
                     <div className="project-preview-image">
                       <div className="image-placeholder">
-                        {/* <img src={iotProject2} alt="IoT Learning Tool Screenshot 2" /> */}
                         Second Screenshot
                       </div>
                     </div>
@@ -425,131 +516,248 @@ export default function Portfolio() {
 
       <section id="skills" className="skills-section">
         <div className="skills-content">
-          <div className="skills-glowing-container">
-            <h2 className="skills-heading">MY SKILLS</h2>
-            
-            <div className="skills-category-section">
-              <h3 className="skills-category-title">Frontend Development</h3>
-              <div className="skills-grid">
-                <div className="skill-card">
-                  <div className="skill-icon">
+          <h2 className="skills-heading">MY SKILLS</h2>
+          
+          <div className="skills-cards-container">
+            <div 
+              className={`skill-category-card ${flippedCards.frontend ? 'flipped' : ''}`}
+              onClick={() => handleCardFlip('frontend')}
+            >
+              <div className="card-inner">
+                <div className="card-front">
+                  <div className="category-icon">
                     <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 14.5c1.38 0 2.5-1.12 2.5-2.5S13.38 9.5 12 9.5 9.5 10.62 9.5 12s1.12 2.5 2.5 2.5z"/>
                       <path d="M22 12c0-.17-.01-.33-.02-.5-.02-.31-.05-.61-.09-.91-.08-.53-.19-1.04-.33-1.53-.13-.47-.29-.92-.47-1.36-.19-.44-.4-.86-.64-1.27-.23-.41-.49-.8-.77-1.17-.28-.37-.58-.72-.9-1.05-.32-.33-.67-.63-1.04-.91-.37-.28-.76-.54-1.17-.77-.41-.24-.83-.45-1.27-.64-.44-.18-.89-.34-1.36-.47-.49-.14-1-.25-1.53-.33-.3-.04-.6-.07-.91-.09-.17-.01-.33-.02-.5-.02s-.33.01-.5.02c-.31.02-.61.05-.91.09-.53.08-1.04.19-1.53.33-.47.13-.92.29-1.36.47-.44.19-.86.4-1.27.64-.41.23-.8.49-1.17.77-.37.28-.72.58-1.05.9-.33.32-.63.67-.91 1.04-.28.37-.54.76-.77 1.17-.24.41-.45.83-.64 1.27-.18.44-.34.89-.47 1.36-.14.49-.25 1-.33 1.53-.04.3-.07.6-.09.91-.01.17-.02.33-.02.5s.01.33.02.5c.02.31.05.61.09.91.08.53.19 1.04.33 1.53.13.47.29.92.47 1.36.19.44.4.86.64 1.27.23.41.49.8.77 1.17.28.37.58.72.9 1.05.32.33.67.63 1.04.91.37.28.76.54 1.17.77.41.24.83.45 1.27.64.44.18.89.34 1.36.47.49.14 1 .25 1.53.33.3.04.6.07.91.09.17.01.33.02.5.02s.33-.01.5-.02c.31-.02.61-.05.91-.09.53-.08 1.04-.19 1.53-.33.47-.13.92-.29 1.36-.47.44-.19.86-.4 1.27-.64.41-.23.8-.49 1.17-.77.37-.28.72-.58 1.05-.9.33-.32.63-.67.91-1.04.28-.37.54-.76.77-1.17.24-.41.45-.83.64-1.27.18-.44.34-.89.47-1.36.14-.49.25-1 .33-1.53.04-.3.07-.6.09-.91.01-.17.02-.33.02-.5zm-10 6c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/>
                     </svg>
                   </div>
-                  <h4 className="skill-name">React.js</h4>
+                  <h3 className="category-name">Frontend Development</h3>
+                  <p className="card-hint">Click to view skills</p>
                 </div>
-                <div className="skill-card">
-                  <div className="skill-icon">
-                    <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M3 3h18v18H3V3zm16.5 13.5h-13v-9h13v9z"/>
-                    </svg>
+                <div className="card-back">
+                  <h4 className="back-title">Frontend Development</h4>
+                  <div className="tech-list">
+                    <div className="tech-item">
+                      <span className="tech-dot"></span>
+                      <span>React.js</span>
+                    </div>
+                    <div className="tech-item">
+                      <span className="tech-dot"></span>
+                      <span>HTML/CSS</span>
+                    </div>
+                    <div className="tech-item">
+                      <span className="tech-dot"></span>
+                      <span>JavaScript</span>
+                    </div>
                   </div>
-                  <h4 className="skill-name">HTML/CSS</h4>
-                </div>
-                <div className="skill-card">
-                  <div className="skill-icon">
-                    <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M3 3h18v18H3V3zm16 13.92l-2.5-1v-2.65L18 12v1.92zm-2.5-5.42L18 10.08V8.5l-1.5 1v1.42zm-2 .5v2.5l-2 1v-2.5l2-1zm-2 6l-2-1v-2.5l2 1V18zm-2-3.5L9 13.58V11l1.5.92v2.58zM9 9.5v2.58L7.5 11V8.42L9 9.5zM6 12v-1.92l1.5 1v2.65L6 12z"/>
-                    </svg>
-                  </div>
-                  <h4 className="skill-name">JavaScript</h4>
                 </div>
               </div>
             </div>
 
-            <div className="skills-category-section">
-              <h3 className="skills-category-title">Backend Development</h3>
-              <div className="skills-grid">
-                <div className="skill-card">
-                  <div className="skill-icon">
+            <div 
+              className={`skill-category-card ${flippedCards.backend ? 'flipped' : ''}`}
+              onClick={() => handleCardFlip('backend')}
+            >
+              <div className="card-inner">
+                <div className="card-front">
+                  <div className="category-icon">
                     <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l7.6 3.8L12 11.78 4.4 7.98 12 4.18zM4 9.21l7 3.5v7.11l-7-3.5V9.21zm9 10.61v-7.11l7-3.5v7.11l-7 3.5z"/>
                     </svg>
                   </div>
-                  <h4 className="skill-name">Node.js</h4>
+                  <h3 className="category-name">Backend Development</h3>
+                  <p className="card-hint">Click to view skills</p>
                 </div>
-                <div className="skill-card">
-                  <div className="skill-icon">
-                    <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-                      <ellipse cx="12" cy="12" rx="8" ry="3"/>
-                      <path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/>
-                      <path d="M4 12v4c0 1.66 3.58 3 8 3s8-1.34 8-3v-4"/>
-                    </svg>
+                <div className="card-back">
+                  <h4 className="back-title">Backend Development</h4>
+                  <div className="tech-list">
+                    <div className="tech-item">
+                      <span className="tech-dot"></span>
+                      <span>Node.js</span>
+                    </div>
+                    <div className="tech-item">
+                      <span className="tech-dot"></span>
+                      <span>PHP</span>
+                    </div>
+                    <div className="tech-item">
+                      <span className="tech-dot"></span>
+                      <span>MySQL</span>
+                    </div>
                   </div>
-                  <h4 className="skill-name">PHP</h4>
-                </div>
-                <div className="skill-card">
-                  <div className="skill-icon">
-                    <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                      <path d="M12 6c-3.31 0-6 2.69-6 6h2c0-2.21 1.79-4 4-4s4 1.79 4 4c0 2-3 3.75-3 6h2c0-1.5 3-3.75 3-6 0-3.31-2.69-6-6-6z"/>
-                    </svg>
-                  </div>
-                  <h4 className="skill-name">MySQL</h4>
                 </div>
               </div>
             </div>
 
-            <div className="skills-category-section">
-              <h3 className="skills-category-title">Mobile & IoT</h3>
-              <div className="skills-grid">
-                <div className="skill-card">
-                  <div className="skill-icon">
+            <div 
+              className={`skill-category-card ${flippedCards.mobile ? 'flipped' : ''}`}
+              onClick={() => handleCardFlip('mobile')}
+            >
+              <div className="card-inner">
+                <div className="card-front">
+                  <div className="category-icon">
                     <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
                       <path d="M17 2H7c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H7V4h10v16z"/>
                     </svg>
                   </div>
-                  <h4 className="skill-name">Flutter</h4>
+                  <h3 className="category-name">Mobile & IoT</h3>
+                  <p className="card-hint">Click to view skills</p>
                 </div>
-                <div className="skill-card">
-                  <div className="skill-icon">
-                    <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                    </svg>
+                <div className="card-back">
+                  <h4 className="back-title">Mobile & IoT</h4>
+                  <div className="tech-list">
+                    <div className="tech-item">
+                      <span className="tech-dot"></span>
+                      <span>Flutter</span>
+                    </div>
+                    <div className="tech-item">
+                      <span className="tech-dot"></span>
+                      <span>Arduino</span>
+                    </div>
+                    <div className="tech-item">
+                      <span className="tech-dot"></span>
+                      <span>Firebase</span>
+                    </div>
                   </div>
-                  <h4 className="skill-name">Arduino</h4>
-                </div>
-                <div className="skill-card">
-                  <div className="skill-icon">
-                    <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
-                    </svg>
-                  </div>
-                  <h4 className="skill-name">Firebase</h4>
                 </div>
               </div>
             </div>
 
-            <div className="skills-category-section">
-              <h3 className="skills-category-title">Tools & Others</h3>
-              <div className="skills-grid">
-                <div className="skill-card">
-                  <div className="skill-icon">
+            <div 
+              className={`skill-category-card ${flippedCards.tools ? 'flipped' : ''}`}
+              onClick={() => handleCardFlip('tools')}
+            >
+              <div className="card-inner">
+                <div className="card-front">
+                  <div className="category-icon">
                     <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
                       <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
                     </svg>
                   </div>
-                  <h4 className="skill-name">Git</h4>
+                  <h3 className="category-name">Tools & Others</h3>
+                  <p className="card-hint">Click to view skills</p>
                 </div>
-                <div className="skill-card">
-                  <div className="skill-icon">
-                    <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V7h14v12z"/>
-                    </svg>
+                <div className="card-back">
+                  <h4 className="back-title">Tools & Others</h4>
+                  <div className="tech-list">
+                    <div className="tech-item">
+                      <span className="tech-dot"></span>
+                      <span>Git</span>
+                    </div>
+                    <div className="tech-item">
+                      <span className="tech-dot"></span>
+                      <span>Figma</span>
+                    </div>
+                    <div className="tech-item">
+                      <span className="tech-dot"></span>
+                      <span>VS Code</span>
+                    </div>
                   </div>
-                  <h4 className="skill-name">Figma</h4>
-                </div>
-                <div className="skill-card">
-                  <div className="skill-icon">
-                    <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10z"/>
-                    </svg>
-                  </div>
-                  <h4 className="skill-name">VS Code</h4>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+     <section id="contact" className="contact-section">
+        <div className="contact-content">
+          <h2 className="contact-heading">CONTACT ME</h2>
+          
+          <div className="contact-container">
+            {/* Left Side - Contact Details */}
+            <div className="contact-details">
+              <div className="contact-item">
+                <svg className="contact-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="5" width="18" height="14" rx="2" stroke="black" strokeWidth="2"/>
+                  <path d="M3 7L12 13L21 7" stroke="black" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                <span className="contact-text">princessjeanpotes000@gmail.com</span>
+              </div>
+
+              <div className="contact-item">
+                <svg className="contact-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="7" y="2" width="10" height="20" rx="2" stroke="black" strokeWidth="2"/>
+                  <line x1="7" y1="18" x2="17" y2="18" stroke="black" strokeWidth="2"/>
+                </svg>
+                <span className="contact-text">09061421473</span>
+              </div>
+
+              <div className="social-links">
+                <a href="https://www.facebook.com/pihjean/" target="_blank" rel="noopener noreferrer" className="social-link">
+                  <svg viewBox="0 0 24 24" fill="black" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                </a>
+
+                <a href="https://www.linkedin.com/in/princesss-jean-potes-27208a3a5/" target="_blank" rel="noopener noreferrer" className="social-link">
+                  <svg viewBox="0 0 24 24" fill="black" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                  </svg>
+                </a>
+
+                <a href="https://github.com/pihjean" target="_blank" rel="noopener noreferrer" className="social-link">
+                  <svg viewBox="0 0 24 24" fill="black" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            <div className="vertical-divider"></div>
+
+            {/* Right Side - Contact Form */}
+            <div className="contact-form-container">
+              <form onSubmit={handleContactSubmit} className="contact-form">
+                <div className="form-group">
+                  <label htmlFor="name">Name:</label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={contactForm.name}
+                    onChange={handleContactChange}
+                    placeholder="Enter Name"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="email">Email:</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={contactForm.email}
+                    onChange={handleContactChange}
+                    placeholder="name123@gamil.com"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="message">Message:</label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    value={contactForm.message}
+                    onChange={handleContactChange}
+                    placeholder="Enter message"
+                    rows="5"
+                    required
+                  ></textarea>
+                </div>
+
+                <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                  {isSubmitting ? 'SENDING...' : 'SEND MESSAGE'}
+                </button>
+
+                {submitStatus === 'success' && (
+                  <p className="status-message success">Message sent successfully!</p>
+                )}
+                {submitStatus === 'error' && (
+                  <p className="status-message error">Failed to send message. Please try again.</p>
+                )}
+              </form>
             </div>
           </div>
         </div>
