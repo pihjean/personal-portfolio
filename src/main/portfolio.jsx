@@ -1,11 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, ArrowRight, Download } from 'lucide-react';
-import emailjs from '@emailjs/browser';
 import './portfolio.css';
 
-// Import your images here
+// Import your images here - replace with your actual image files
+import profilePhoto from '../assets/profile-photo.jpg';
 import shsProject from '../assets/shs-project.png';
 import shsProject2 from '../assets/shs-project2.png';
+// import parishProject from './assets/parish-project.jpg';
+// import parishProject2 from './assets/parish-project-2.jpg';
+// import iotProject from './assets/iot-project.jpg';
+// import iotProject2 from './assets/iot-project-2.jpg';
 
 export default function Portfolio() {
   const [headingText, setHeadingText] = useState('');
@@ -14,10 +18,10 @@ export default function Portfolio() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAboutSection, setIsAboutSection] = useState(false);
   const [isProjectsSection, setIsProjectsSection] = useState(false);
-  const [isContactSection, setIsContactSection] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [aboutText1, setAboutText1] = useState('');
   const [aboutText2, setAboutText2] = useState('');
+  const [isContactSection, setIsContactSection] = useState(false);
   const [hasTypedAbout, setHasTypedAbout] = useState(false);
   const [projectImages, setProjectImages] = useState({
     shs: 0,
@@ -38,17 +42,10 @@ export default function Portfolio() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState('');
   
-  const formRef = useRef();
-  
   const fullHeading = "Hi, I am Princess Jean Potes";
   const jobs = ["Web Developer", "Game Developer", "UI/UX Designer"];
   const aboutParagraph1 = "A Bachelor of Science in Information Technology student at Camarines Norte State College. Since 2024, I have been working as a freelance developer and have completed projects that show my skills in both backend and frontend development.";
   const aboutParagraph2 = "I enjoy building systems that are efficient and can grow easily. I am also interested in combining hardware and software for robotics projects. I know how to use technologies like React.js, Node.js, Flutter, and Arduino programming.";
-  
-  // Initialize EmailJS
-  useEffect(() => {
-    emailjs.init("RGqSAb_M0itJH2VJv");
-  }, []);
   
   // Loading screen
   useEffect(() => {
@@ -98,62 +95,68 @@ export default function Portfolio() {
     }
   }, [currentJobText, isDeleting, currentJobIndex, headingText]);
 
-  // About and Projects section scroll detection
-  useEffect(() => {
-    const handleScroll = () => {
-      const homeSection = document.getElementById('home');
-      const aboutSection = document.getElementById('about');
-      const projectsSection = document.getElementById('projects');
-      const skillsSection = document.getElementById('skills');
-      const contactSection = document.getElementById('contact');
+ // About and Projects section scroll detection
+useEffect(() => {
+  const handleScroll = () => {
+    const homeSection = document.getElementById('home');
+    const aboutSection = document.getElementById('about');
+    const projectsSection = document.getElementById('projects');
+    const skillsSection = document.getElementById('skills');
+    const contactSection = document.getElementById('contact');
+    
+    if (homeSection && aboutSection && projectsSection && skillsSection && contactSection) {
+      const homeTop = homeSection.offsetTop;
+      const aboutTop = aboutSection.offsetTop;
+      const projectsTop = projectsSection.offsetTop;
+      const skillsTop = skillsSection.offsetTop;
+      const contactTop = contactSection.offsetTop;
+      const scrollPosition = window.scrollY + 100;
       
-      if (homeSection && aboutSection && projectsSection && skillsSection && contactSection) {
-        const homeTop = homeSection.offsetTop;
-        const aboutTop = aboutSection.offsetTop;
-        const projectsTop = projectsSection.offsetTop;
-        const skillsTop = skillsSection.offsetTop;
-        const contactTop = contactSection.offsetTop;
-        const scrollPosition = window.scrollY + 100;
-        
-        if (scrollPosition >= contactTop) {
-          setIsAboutSection(false);
-          setIsProjectsSection(false);
-          setIsContactSection(true);
+      // Check which section we're currently in based on scroll position
+      if (scrollPosition >= contactTop) {
+        // In Contact section (white background, black nav)
+        setIsAboutSection(false);
+        setIsProjectsSection(false);
+        setIsContactSection(true);
+      }
+      else if (scrollPosition >= skillsTop) {
+        // In Skills section (black background)
+        setIsAboutSection(true);
+        setIsProjectsSection(false);
+        setIsContactSection(false);
+        if (!hasTypedAbout) {
+          setHasTypedAbout(true);
         }
-        else if (scrollPosition >= skillsTop) {
-          setIsAboutSection(true);
-          setIsProjectsSection(false);
-          setIsContactSection(false);
-          if (!hasTypedAbout) {
-            setHasTypedAbout(true);
-          }
-        } 
-        else if (scrollPosition >= projectsTop) {
-          setIsAboutSection(false);
-          setIsProjectsSection(true);
-          setIsContactSection(false);
-        }
-        else if (scrollPosition >= aboutTop) {
-          setIsAboutSection(true);
-          setIsProjectsSection(false);
-          setIsContactSection(false);
-          if (!hasTypedAbout) {
-            setHasTypedAbout(true);
-          }
-        }
-        else {
-          setIsAboutSection(false);
-          setIsProjectsSection(false);
-          setIsContactSection(false);
+      } 
+      else if (scrollPosition >= projectsTop) {
+        // In Projects section (white background)
+        setIsAboutSection(false);
+        setIsProjectsSection(true);
+        setIsContactSection(false);
+      }
+      else if (scrollPosition >= aboutTop) {
+        // In About section (black background)
+        setIsAboutSection(true);
+        setIsProjectsSection(false);
+        setIsContactSection(false);
+        if (!hasTypedAbout) {
+          setHasTypedAbout(true);
         }
       }
-    };
+      else {
+        // In Home section (white background)
+        setIsAboutSection(false);
+        setIsProjectsSection(false);
+        setIsContactSection(false);
+      }
+    }
+  };
 
-    handleScroll();
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [hasTypedAbout]);
-
+  // Run on mount and scroll
+  handleScroll();
+  window.addEventListener('scroll', handleScroll);
+  return () => window.removeEventListener('scroll', handleScroll);
+}, [hasTypedAbout]);
   // About text typewriter effect
   useEffect(() => {
     if (!hasTypedAbout) return;
@@ -183,6 +186,7 @@ export default function Portfolio() {
       let newIndex;
       
       if (direction === 'next') {
+        // 0 = title card, 1 = first image, 2 = second image
         newIndex = currentIndex >= 2 ? 2 : currentIndex + 1;
       } else {
         newIndex = currentIndex <= 0 ? 0 : currentIndex - 1;
@@ -203,44 +207,38 @@ export default function Portfolio() {
   };
 
   const handleContactChange = (e) => {
-    const { name, value } = e.target;
-    const fieldMap = {
-      'from_name': 'name',
-      'from_email': 'email',
-      'message': 'message'
-    };
-    const stateField = fieldMap[name] || name;
-    
     setContactForm(prev => ({
       ...prev,
-      [stateField]: value
+      [e.target.name]: e.target.value
     }));
   };
 
- const handleContactSubmit = async (e) => {
+  const handleContactSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitStatus('');
 
     try {
-      const result = await emailjs.sendForm(
-        'service_muf1ijg', // Your Service ID - UPDATE THIS with your actual Service ID
-        'template_yo6mcig', // Your Template ID
-        formRef.current,
-        'RGqSAb_M0itJH2VJv' // Your Public Key
-      );
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: 'princessjeanpotes000@gmail.com',
+          subject: `Portfolio Contact from ${contactForm.name}`,
+          text: `Name: ${contactForm.name}\nEmail: ${contactForm.email}\n\nMessage:\n${contactForm.message}`
+        }),
+      });
 
-      if (result.text === 'OK') {
+      if (response.ok) {
         setSubmitStatus('success');
         setContactForm({ name: '', email: '', message: '' });
-        if (formRef.current) {
-          formRef.current.reset();
-        }
       } else {
         setSubmitStatus('error');
       }
     } catch (error) {
-      console.error('EmailJS Error:', error);
+      console.error('Error sending email:', error);
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
@@ -271,7 +269,7 @@ export default function Portfolio() {
   }
 
   return (
-    <div className={`portfolio-container ${isAboutSection ? 'in-about-section' : ''} ${isProjectsSection ? 'in-projects-section' : ''} ${isContactSection ? 'in-contact-section' : ''}`}>
+     <div className={`portfolio-container ${isAboutSection ? 'in-about-section' : ''} ${isProjectsSection ? 'in-projects-section' : ''} ${isContactSection ? 'in-contact-section' : ''}`}>
       <nav className="nav">
         <a href="#home">Home</a>
         <a href="#about">About Me</a>
@@ -305,7 +303,8 @@ export default function Portfolio() {
           <div className="photo-frame-outer"></div>
           <div className="photo-frame-inner">
             <div className="photo-placeholder">
-              {/* <img src={profilePhoto} alt="Princess Jean Potes" /> */}
+              {/* Uncomment and use your actual image */}
+              {<img src={profilePhoto} alt="Princess Jean Potes" />}
             </div>
           </div>
         </div>
@@ -407,12 +406,14 @@ export default function Portfolio() {
                   ) : projectImages.parish === 1 ? (
                     <div className="project-preview-image">
                       <div className="image-placeholder">
+                        {/* <img src={parishProject} alt="Parish Appointment System" /> */}
                         First Screenshot
                       </div>
                     </div>
                   ) : (
                     <div className="project-preview-image">
                       <div className="image-placeholder">
+                        {/* <img src={parishProject2} alt="Parish Appointment System Screenshot 2" /> */}
                         Second Screenshot
                       </div>
                     </div>
@@ -457,12 +458,14 @@ export default function Portfolio() {
                   ) : projectImages.iot === 1 ? (
                     <div className="project-preview-image">
                       <div className="image-placeholder">
+                        {/* <img src={iotProject} alt="IoT Learning Tool" /> */}
                         First Screenshot
                       </div>
                     </div>
                   ) : (
                     <div className="project-preview-image">
                       <div className="image-placeholder">
+                        {/* <img src={iotProject2} alt="IoT Learning Tool Screenshot 2" /> */}
                         Second Screenshot
                       </div>
                     </div>
@@ -519,6 +522,7 @@ export default function Portfolio() {
           <h2 className="skills-heading">MY SKILLS</h2>
           
           <div className="skills-cards-container">
+            {/* Frontend Development Card */}
             <div 
               className={`skill-category-card ${flippedCards.frontend ? 'flipped' : ''}`}
               onClick={() => handleCardFlip('frontend')}
@@ -554,6 +558,7 @@ export default function Portfolio() {
               </div>
             </div>
 
+            {/* Backend Development Card */}
             <div 
               className={`skill-category-card ${flippedCards.backend ? 'flipped' : ''}`}
               onClick={() => handleCardFlip('backend')}
@@ -588,6 +593,7 @@ export default function Portfolio() {
               </div>
             </div>
 
+            {/* Mobile & IoT Card */}
             <div 
               className={`skill-category-card ${flippedCards.mobile ? 'flipped' : ''}`}
               onClick={() => handleCardFlip('mobile')}
@@ -622,6 +628,7 @@ export default function Portfolio() {
               </div>
             </div>
 
+            {/* Tools & Others Card */}
             <div 
               className={`skill-category-card ${flippedCards.tools ? 'flipped' : ''}`}
               onClick={() => handleCardFlip('tools')}
